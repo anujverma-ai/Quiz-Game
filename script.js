@@ -1,325 +1,695 @@
+// ==========================================
+// AI PRACTICE QUIZ
+// ==========================================
+
 let practiceQuestions = [];
+
 let currentQuestionIndex = 0;
+
 let score = 0;
-let nextQuestionId = 1;
 
-const setupBox = document.getElementById("setup-box");
-const quizBox = document.getElementById("quiz-box");
-const resultBox = document.getElementById("result");
-const questionCountSelect = document.getElementById("question-count");
-const difficultySelect = document.getElementById("difficulty");
-const startButton = document.getElementById("start-btn");
-const nextButton = document.getElementById("next-btn");
-const restartButton = document.getElementById("restart-btn");
-const questionNumberElement = document.getElementById("question-number");
-const scoreDisplay = document.getElementById("score-display");
-const questionElement = document.getElementById("question");
-const answersElement = document.getElementById("answers");
-const feedbackElement = document.getElementById("feedback");
-const progressElement = document.getElementById("progress");
-const finalScoreElement = document.getElementById("score");
+let answered = false;
 
-function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+
+// ==========================================
+// HTML ELEMENTS
+// ==========================================
+
+const setupBox =
+    document.getElementById("setup-box");
+
+const quizBox =
+    document.getElementById("quiz-box");
+
+const resultBox =
+    document.getElementById("result");
+
+const questionCountInput =
+    document.getElementById("question-count");
+
+const difficultySelect =
+    document.getElementById("difficulty");
+
+const startButton =
+    document.getElementById("start-btn");
+
+const questionNumber =
+    document.getElementById("question-number");
+
+const questionText =
+    document.getElementById("question");
+
+const answersContainer =
+    document.getElementById("answers");
+
+const feedback =
+    document.getElementById("feedback");
+
+const nextButton =
+    document.getElementById("next-btn");
+
+const scoreDisplay =
+    document.getElementById("score-display");
+
+const progressBar =
+    document.getElementById("progress");
+
+const finalScore =
+    document.getElementById("score");
+
+const restartButton =
+    document.getElementById("restart-btn");
+
+
+// ==========================================
+// SHUFFLE ARRAY
+// ==========================================
 
 function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
 
-function uniqueChoices(correct, extras) {
-  const answers = [String(correct)];
+    const copy = [...array];
 
-  extras.forEach(value => {
-    const text = String(value);
-    if (!answers.includes(text)) {
-      answers.push(text);
+    for (
+        let i = copy.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() * (i + 1)
+            );
+
+        [
+            copy[i],
+            copy[j]
+        ] = [
+            copy[j],
+            copy[i]
+        ];
     }
-  });
 
-  while (answers.length < 4) {
-    const filler = String(Number(correct) + randomInt(-12, 12) || randomInt(1, 50));
-    if (!answers.includes(filler)) {
-      answers.push(filler);
+    return copy;
+}
+
+
+// ==========================================
+// GENERATE QUIZ USING GEMINI
+// ==========================================
+
+async function generateGeminiQuiz(
+    count,
+    difficulty
+) {
+
+    const response = await fetch(
+        "/api/generate-quiz",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+
+            body: JSON.stringify({
+                count: count,
+                difficulty: difficulty
+            })
+        }
+    );
+
+
+    const data =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.details ||
+            data.error ||
+            "Failed to generate quiz."
+        );
     }
-  }
 
-  return shuffle(answers.slice(0, 4));
-}
 
-function makeQuestion(level, question, correct, answers) {
-  return {
-    id: nextQuestionId++,
-    level,
-    question,
-    correct: String(correct),
-    answers: shuffle([...answers])
-  };
-}
+    if (
+        !data.questions ||
+        !Array.isArray(data.questions)
+    ) {
 
-function createEasyQuestion() {
-  const type = randomInt(1, 3);
-
-  if (type === 1) {
-    const a = randomInt(1, 20);
-    const b = randomInt(1, 20);
-    const correct = a + b;
-    return makeQuestion(
-      "easy",
-      `What is ${a} + ${b}?`,
-      correct,
-      uniqueChoices(correct, [correct + 1, correct - 1, a + b + 2, Math.abs(a - b)])
-    );
-  }
-
-  if (type === 2) {
-    const a = randomInt(8, 30);
-    const b = randomInt(1, a);
-    const correct = a - b;
-    return makeQuestion(
-      "easy",
-      `What is ${a} - ${b}?`,
-      correct,
-      uniqueChoices(correct, [correct + 2, correct - 2, a + b, b])
-    );
-  }
-
-  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const index = randomInt(0, 6);
-  const correct = days[(index + 1) % 7];
-  const wrong = days.filter(day => day !== correct);
-  return makeQuestion(
-    "easy",
-    `Which day comes after ${days[index]}?`,
-    correct,
-    shuffle([correct, ...shuffle(wrong).slice(0, 3)])
-  );
-}
-
-function createMediumQuestion() {
-  const type = randomInt(1, 4);
-
-  if (type === 1) {
-    const a = randomInt(4, 12);
-    const b = randomInt(4, 12);
-    const correct = a * b;
-    return makeQuestion(
-      "medium",
-      `What is ${a} × ${b}?`,
-      correct,
-      uniqueChoices(correct, [correct + a, correct - b, a + b, (a + 1) * b])
-    );
-  }
-
-  if (type === 2) {
-    const b = randomInt(2, 12);
-    const correct = randomInt(2, 12);
-    const a = b * correct;
-    return makeQuestion(
-      "medium",
-      `What is ${a} ÷ ${b}?`,
-      correct,
-      uniqueChoices(correct, [correct + 1, correct - 1, b, a - b])
-    );
-  }
-
-  if (type === 3) {
-    const facts = [
-      ["Which language is used to style web pages?", "CSS", ["HTML", "Python", "SQL"]],
-      ["What does HTML stand for?", "Hyper Text Markup Language", [
-        "High Text Machine Language",
-        "Hyperlink Text Management Language",
-        "Home Tool Markup Language"
-      ]],
-      ["Which planet is known as the Red Planet?", "Mars", ["Earth", "Jupiter", "Venus"]],
-      ["Which tag creates a link in HTML?", "<a>", ["<link>", "<href>", "<p>"]]
-    ];
-    const fact = facts[randomInt(0, facts.length - 1)];
-    return makeQuestion("medium", fact[0], fact[1], [fact[1], ...fact[2]]);
-  }
-
-  const a = randomInt(10, 40);
-  const b = randomInt(10, 40);
-  const c = randomInt(2, 9);
-  const correct = a + b * c;
-  return makeQuestion(
-    "medium",
-    `What is ${a} + ${b} × ${c}?`,
-    correct,
-    uniqueChoices(correct, [(a + b) * c, a * b + c, a + b + c])
-  );
-}
-
-function createHardQuestion() {
-  const type = randomInt(1, 4);
-
-  if (type === 1) {
-    const n = randomInt(2, 8);
-    const correct = 2 ** n;
-    return makeQuestion(
-      "hard",
-      `What is 2^${n}?`,
-      correct,
-      uniqueChoices(correct, [n * 2, 2 * n + 2, 2 ** (n - 1), n ** 2])
-    );
-  }
-
-  if (type === 2) {
-    const a = randomInt(20, 90);
-    const b = randomInt(3, 9);
-    const correct = a % b;
-    return makeQuestion(
-      "hard",
-      `What is ${a} % ${b}?`,
-      correct,
-      uniqueChoices(correct, [(a + 1) % b, a % (b + 1), b, a - b])
-    );
-  }
-
-  if (type === 3) {
-    const facts = [
-      ["Which data structure uses FIFO?", "Queue", ["Stack", "Tree", "Graph"]],
-      ["What is the time complexity of binary search?", "O(log n)", ["O(1)", "O(n)", "O(n²)"]],
-      ["Which protocol is used for secure web communication?", "HTTPS", ["HTTP", "FTP", "SMTP"]],
-      ["Which keyword creates a constant in JavaScript?", "const", ["var", "let", "constant"]]
-    ];
-    const fact = facts[randomInt(0, facts.length - 1)];
-    return makeQuestion("hard", fact[0], fact[1], [fact[1], ...fact[2]]);
-  }
-
-  const a = randomInt(5, 15);
-  const b = randomInt(5, 15);
-  const c = randomInt(2, 8);
-  const correct = (a + b) * c;
-  return makeQuestion(
-    "hard",
-    `What is (${a} + ${b}) × ${c}?`,
-    correct,
-    uniqueChoices(correct, [a + b * c, a * b * c, a + b + c])
-  );
-}
-
-function createQuestion(level) {
-  if (level === "easy") return createEasyQuestion();
-  if (level === "medium") return createMediumQuestion();
-  if (level === "hard") return createHardQuestion();
-
-  const mixed = ["easy", "medium", "hard"];
-  return createQuestion(mixed[randomInt(0, 2)]);
-}
-
-function createPracticeSet(count, level) {
-  const questions = [];
-  const seen = new Set();
-
-  while (questions.length < count) {
-    const question = createQuestion(level);
-    const key = question.question;
-
-    if (!seen.has(key)) {
-      seen.add(key);
-      questions.push(question);
+        throw new Error(
+            "Invalid quiz received from Gemini."
+        );
     }
-  }
 
-  return questions;
+
+    // Validate questions
+
+    data.questions.forEach(
+        (question) => {
+
+            if (!question.question) {
+
+                throw new Error(
+                    "Question text is missing."
+                );
+            }
+
+
+            if (
+                !Array.isArray(
+                    question.options
+                ) ||
+                question.options.length !== 4
+            ) {
+
+                throw new Error(
+                    "Every question must have exactly 4 options."
+                );
+            }
+
+
+            if (!question.correct) {
+
+                throw new Error(
+                    "Correct answer is missing."
+                );
+            }
+
+
+            if (!question.solution) {
+
+                throw new Error(
+                    "Solution is missing."
+                );
+            }
+
+
+            if (
+                !question.options.includes(
+                    question.correct
+                )
+            ) {
+
+                throw new Error(
+                    "Correct answer does not match the options."
+                );
+            }
+
+        }
+    );
+
+
+    return data.questions;
 }
 
-function updateProgress(answeredCurrent) {
-  const completed = currentQuestionIndex + (answeredCurrent ? 1 : 0);
-  progressElement.style.width =
-    `${(completed / practiceQuestions.length) * 100}%`;
+
+// ==========================================
+// LOADING STATE
+// ==========================================
+
+function setLoadingState(
+    isLoading
+) {
+
+    if (isLoading) {
+
+        startButton.disabled = true;
+
+        startButton.textContent =
+            "Generating Quiz...";
+
+    } else {
+
+        startButton.disabled = false;
+
+        startButton.textContent =
+            "Start Practice";
+    }
 }
 
-function startPractice() {
-  const selectedCount = Number(questionCountSelect.value);
-  const selectedLevel = difficultySelect.value;
 
-  practiceQuestions = createPracticeSet(selectedCount, selectedLevel);
-  currentQuestionIndex = 0;
-  score = 0;
+// ==========================================
+// START PRACTICE
+// ==========================================
 
-  setupBox.style.display = "none";
-  quizBox.style.display = "block";
-  resultBox.style.display = "none";
-  scoreDisplay.textContent = "Score: 0";
+async function startPractice() {
 
-  loadQuestion();
+    const selectedCount =
+        Number(
+            questionCountInput.value
+        );
+
+
+    let selectedDifficulty =
+        difficultySelect.value;
+
+
+    // --------------------------------------
+    // VALIDATE QUESTION COUNT
+    // --------------------------------------
+
+    if (
+        !Number.isInteger(
+            selectedCount
+        ) ||
+        selectedCount < 1 ||
+        selectedCount > 20
+    ) {
+
+        alert(
+            "Please enter a number between 1 and 20."
+        );
+
+        return;
+    }
+
+
+    // --------------------------------------
+    // GENERATE QUIZ
+    // --------------------------------------
+
+    try {
+
+        setLoadingState(true);
+
+
+        // Gemini backend expects:
+        // easy / medium / hard / mixed
+
+        if (
+            selectedDifficulty === "all"
+        ) {
+
+            selectedDifficulty = "mixed";
+
+        }
+
+
+        practiceQuestions =
+            await generateGeminiQuiz(
+                selectedCount,
+                selectedDifficulty
+            );
+
+
+        currentQuestionIndex = 0;
+
+        score = 0;
+
+        answered = false;
+
+
+        // ----------------------------------
+        // SWITCH SCREEN
+        // ----------------------------------
+
+        setupBox.style.display =
+            "none";
+
+        quizBox.style.display =
+            "block";
+
+        resultBox.style.display =
+            "none";
+
+
+        loadQuestion();
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        alert(
+            "Unable to generate quiz.\n\n" +
+            error.message
+        );
+
+    }
+
+    finally {
+
+        setLoadingState(false);
+
+    }
 }
+
+
+// ==========================================
+// LOAD QUESTION
+// ==========================================
 
 function loadQuestion() {
-  const currentQuestion = practiceQuestions[currentQuestionIndex];
 
-  questionElement.textContent = currentQuestion.question;
-  questionNumberElement.textContent =
-    `Question ${currentQuestionIndex + 1} of ${practiceQuestions.length}`;
+    const currentQuestion =
+        practiceQuestions[
+            currentQuestionIndex
+        ];
 
-  updateProgress(false);
-  answersElement.innerHTML = "";
-  feedbackElement.textContent = "";
-  nextButton.style.display = "none";
-  nextButton.textContent =
-    currentQuestionIndex === practiceQuestions.length - 1 ? "See results" : "Next";
 
-  currentQuestion.answers.forEach(answer => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = answer;
-    button.classList.add("answer-btn");
-    button.addEventListener("click", () => selectAnswer(button, answer));
-    answersElement.appendChild(button);
-  });
-}
+    if (!currentQuestion) {
 
-function selectAnswer(selectedButton, selectedAnswer) {
-  const currentQuestion = practiceQuestions[currentQuestionIndex];
-  const answerButtons = document.querySelectorAll(".answer-btn");
+        showResult();
 
-  answerButtons.forEach(button => {
-    button.disabled = true;
-    if (button.textContent === currentQuestion.correct) {
-      button.classList.add("correct");
+        return;
     }
-  });
 
-  if (selectedAnswer === currentQuestion.correct) {
-    score++;
-    feedbackElement.textContent = "Correct!";
-    feedbackElement.style.color = "#16a34a";
-  } else {
-    selectedButton.classList.add("wrong");
-    feedbackElement.textContent = `Wrong! Correct answer: ${currentQuestion.correct}`;
-    feedbackElement.style.color = "#dc2626";
-  }
 
-  scoreDisplay.textContent = `Score: ${score}`;
-  updateProgress(true);
-  nextButton.style.display = "block";
+    answered = false;
+
+
+    // --------------------------------------
+    // QUESTION NUMBER
+    // --------------------------------------
+
+    questionNumber.textContent =
+        `Question ${
+            currentQuestionIndex + 1
+        } of ${
+            practiceQuestions.length
+        }`;
+
+
+    // --------------------------------------
+    // SCORE
+    // --------------------------------------
+
+    scoreDisplay.textContent =
+        `Score: ${score}`;
+
+
+    // --------------------------------------
+    // PROGRESS
+    // --------------------------------------
+
+    const progress =
+        (
+            (currentQuestionIndex + 1) /
+            practiceQuestions.length
+        ) * 100;
+
+
+    progressBar.style.width =
+        `${progress}%`;
+
+
+    // --------------------------------------
+    // QUESTION
+    // --------------------------------------
+
+    questionText.textContent =
+        currentQuestion.question;
+
+
+    // --------------------------------------
+    // CLEAR OLD ANSWERS
+    // --------------------------------------
+
+    answersContainer.innerHTML = "";
+
+    feedback.textContent = "";
+
+
+    nextButton.style.display =
+        "none";
+
+
+    // --------------------------------------
+    // SHUFFLE OPTIONS
+    // --------------------------------------
+
+    const shuffledOptions =
+        shuffle(
+            currentQuestion.options
+        );
+
+
+    // --------------------------------------
+    // CREATE ANSWER BUTTONS
+    // --------------------------------------
+
+    shuffledOptions.forEach(
+        (option) => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.className =
+                "answer-btn";
+
+
+            button.textContent =
+                option;
+
+
+            button.type =
+                "button";
+
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    selectAnswer(
+                        button,
+                        option
+                    );
+
+                }
+            );
+
+
+            answersContainer.appendChild(
+                button
+            );
+
+        }
+    );
 }
+
+
+// ==========================================
+// SELECT ANSWER
+// ==========================================
+
+function selectAnswer(
+    selectedButton,
+    selectedOption
+) {
+
+    // Prevent multiple clicks
+
+    if (answered) {
+
+        return;
+    }
+
+
+    answered = true;
+
+
+    const currentQuestion =
+        practiceQuestions[
+            currentQuestionIndex
+        ];
+
+
+    const allButtons =
+        answersContainer.querySelectorAll(
+            ".answer-btn"
+        );
+
+
+    // Disable all answers
+
+    allButtons.forEach(
+        (button) => {
+
+            button.disabled = true;
+
+        }
+    );
+
+
+    // --------------------------------------
+    // CHECK ANSWER
+    // --------------------------------------
+
+    const isCorrect =
+        selectedOption ===
+        currentQuestion.correct;
+
+
+    if (isCorrect) {
+
+        score++;
+
+
+        selectedButton.classList.add(
+            "correct"
+        );
+
+
+        feedback.textContent =
+            "Correct! 🎉";
+
+    } else {
+
+        selectedButton.classList.add(
+            "wrong"
+        );
+
+
+        feedback.textContent =
+            "Wrong answer.";
+
+        // Highlight correct answer
+
+        allButtons.forEach(
+            (button) => {
+
+                if (
+                    button.textContent ===
+                    currentQuestion.correct
+                ) {
+
+                    button.classList.add(
+                        "correct"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // --------------------------------------
+    // SHOW SOLUTION
+    // --------------------------------------
+
+    const solutionBox =
+        document.createElement(
+            "div"
+        );
+
+
+    solutionBox.className =
+        "solution-box";
+
+
+    solutionBox.innerHTML = `
+        <strong>
+            ${isCorrect
+                ? "Correct! 🎉"
+                : "Correct answer: " +
+                  currentQuestion.correct}
+        </strong>
+
+        <p>
+            <strong>Solution:</strong>
+            ${currentQuestion.solution}
+        </p>
+    `;
+
+
+    answersContainer.appendChild(
+        solutionBox
+    );
+
+
+    // --------------------------------------
+    // SHOW NEXT BUTTON
+    // --------------------------------------
+
+    nextButton.style.display =
+        "block";
+
+
+    scoreDisplay.textContent =
+        `Score: ${score}`;
+}
+
+
+// ==========================================
+// NEXT QUESTION
+// ==========================================
+
+function nextQuestion() {
+
+    currentQuestionIndex++;
+
+    loadQuestion();
+}
+
+
+// ==========================================
+// SHOW RESULT
+// ==========================================
 
 function showResult() {
-  quizBox.style.display = "none";
-  resultBox.style.display = "block";
-  finalScoreElement.textContent =
-    `You scored ${score} out of ${practiceQuestions.length}!`;
+
+    quizBox.style.display =
+        "none";
+
+    resultBox.style.display =
+        "block";
+
+
+    finalScore.textContent =
+        `Your Score: ${score} / ${practiceQuestions.length}`;
+
 }
 
-nextButton.addEventListener("click", () => {
-  currentQuestionIndex++;
-  if (currentQuestionIndex < practiceQuestions.length) {
-    loadQuestion();
-  } else {
-    showResult();
-  }
-});
 
-restartButton.addEventListener("click", () => {
-  resultBox.style.display = "none";
-  setupBox.style.display = "block";
-});
+// ==========================================
+// RESTART QUIZ
+// ==========================================
 
-startButton.addEventListener("click", startPractice);
+function restartQuiz() {
+
+    currentQuestionIndex = 0;
+
+    score = 0;
+
+    answered = false;
+
+
+    resultBox.style.display =
+        "none";
+
+    setupBox.style.display =
+        "block";
+
+}
+
+
+// ==========================================
+// EVENT LISTENERS
+// ==========================================
+
+startButton.addEventListener(
+    "click",
+    startPractice
+);
+
+
+nextButton.addEventListener(
+    "click",
+    nextQuestion
+);
+
+
+restartButton.addEventListener(
+    "click",
+    restartQuiz
+);

@@ -1,55 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Practice Quiz</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Practice Quiz</title>
+
+    <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <main class="card">
-    <section id="setup-box">
-      <h1>Practice Quiz</h1>
-      <p id="available-questions">Unlimited questions available</p>
 
-      <label for="difficulty">Difficulty</label>
-      <select id="difficulty">
-        <option value="all">All</option>
-        <option value="easy">Easy</option>
-        <option value="medium">Medium</option>
-        <option value="hard">Hard</option>
-      </select>
+    <main class="card">
 
-      <label for="question-count">Number of questions</label>
-      <select id="question-count">
-        <option value="15">15</option>
-        <option value="30">30</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-      </select>
+        <!-- =========================
+             SETUP SCREEN
+        ========================== -->
 
-      <button id="start-btn" type="button">Start practice</button>
-    </section>
+        <section id="setup-box">
 
-    <section id="quiz-box">
-      <div class="meta">
-        <span id="question-number"></span>
-        <span id="score-display">Score: 0</span>
-      </div>
-      <div class="progress"><div id="progress" class="progress-bar"></div></div>
-      <h2 id="question"></h2>
-      <div id="answers"></div>
-      <p id="feedback"></p>
-      <button id="next-btn" type="button">Next</button>
-    </section>
+            <h1>Practice Quiz</h1>
 
-    <section id="result">
-      <h1>Results</h1>
-      <p id="score"></p>
-      <button id="restart-btn" type="button">Practice again</button>
-    </section>
-  </main>
+            <p id="available-questions">
+                AI-generated questions available
+            </p>
 
-  <script src="script.js"></script>
+            <!-- Difficulty -->
+
+            <label for="difficulty">
+                Difficulty
+            </label>
+
+            <select id="difficulty">
+
+                <option value="mixed">
+                    All / Mixed
+                </option>
+
+                <option value="easy">
+                    Easy
+                </option>
+
+                <option value="medium">
+                    Medium
+                </option>
+
+                <option value="hard">
+                    Hard
+                </option>
+
+            </select>
+
+
+            <!-- Number of Questions -->
+
+            <label for="question-count">
+                Number of questions
+            </label>
+
+            <input
+                id="question-count"
+                type="number"
+                min="1"
+                max="20"
+                value="5"
+                placeholder="Enter number of questions"
+            />
+
+            <small>
+                Enter any number from 1 to 20
+            </small>
+
+
+            <!-- Start -->
+
+            <button
+                id="start-btn"
+                type="button"
+            >
+                Start Practice
+            </button>
+
+        </section>
+
+
+        <!-- =========================
+             QUIZ SCREEN
+        ========================== -->
+
+        <section id="quiz-box">
+
+            <div class="meta">
+
+                <span id="question-number"></span>
+
+                <span id="score-display">
+                    Score: 0
+                </span>
+
+            </div>
+
+
+            <div class="progress">
+
+                <div
+                    id="progress"
+                    class="progress-bar"
+                ></div>
+
+            </div>
+
+
+            <h2 id="question"></h2>
+
+
+            <div id="answers"></div>
+
+
+            <p id="feedback"></p>
+
+
+            <button
+                id="next-btn"
+                type="button"
+            >
+                Next
+            </button>
+
+        </section>
+
+
+        <!-- =========================
+             RESULT SCREEN
+        ========================== -->
+
+        <section id="result">
+
+            <h1>Results</h1>
+
+            <p id="score"></p>
+
+            <button
+                id="restart-btn"
+                type="button"
+            >
+                Practice Again
+            </button>
+
+        </section>
+
+    </main>
+
+
+    <script src="script.js"></script>
+
 </body>
+
 </html>

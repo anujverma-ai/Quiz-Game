@@ -123,3 +123,22 @@ button:disabled {
   min-height: 1.4em;
   font-weight: 600;
 }
+.solution-box {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+    line-height: 1.5;
+}
+
+.solution-box p {
+    margin: 8px 0 0;
+}
+
+small {
+    display: block;
+    margin-top: 6px;
+    color: #6b7280;
+}
