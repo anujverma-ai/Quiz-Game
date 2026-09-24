@@ -551,6 +551,7 @@ function selectAnswer(
         feedback.textContent =
             "Wrong answer.";
 
+
         // Highlight correct answer
 
         allButtons.forEach(
@@ -589,10 +590,12 @@ function selectAnswer(
 
     solutionBox.innerHTML = `
         <strong>
-            ${isCorrect
-                ? "Correct! 🎉"
-                : "Correct answer: " +
-                  currentQuestion.correct}
+            ${
+                isCorrect
+                    ? "Correct! 🎉"
+                    : "Correct answer: " +
+                      currentQuestion.correct
+            }
         </strong>
 
         <p>
@@ -613,6 +616,13 @@ function selectAnswer(
 
     nextButton.style.display =
         "block";
+
+
+    nextButton.textContent =
+        currentQuestionIndex ===
+        practiceQuestions.length - 1
+            ? "See Results"
+            : "Next";
 
 
     scoreDisplay.textContent =
